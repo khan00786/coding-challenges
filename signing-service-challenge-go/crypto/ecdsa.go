@@ -4,6 +4,8 @@ import (
 	"crypto/ecdsa"
 	"crypto/x509"
 	"encoding/pem"
+
+	"github.com/fiskaly/coding-challenges/signing-service-challenge/domain"
 )
 
 // ECCKeyPair is a DTO that holds ECC private and public keys.
@@ -23,12 +25,14 @@ func NewECCMarshaler() ECCMarshaler {
 // Encode takes an ECCKeyPair and encodes it to be written on disk.
 // It returns the public and the private key as a byte slice.
 func (m ECCMarshaler) Encode(keyPair ECCKeyPair) ([]byte, []byte, error) {
+
 	privateKeyBytes, err := x509.MarshalECPrivateKey(keyPair.Private)
+
 	if err != nil {
 		return nil, nil, err
 	}
+	publicKeyBytes, err := x509.MarshalPKIXPublicKey(keyPair.Public)
 
-	publicKeyBytes, err := x509.MarshalPKIXPublicKey(&keyPair.Public)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -58,4 +62,20 @@ func (m ECCMarshaler) Decode(privateKeyBytes []byte) (*ECCKeyPair, error) {
 		Private: privateKey,
 		Public:  &privateKey.PublicKey,
 	}, nil
+}
+
+func GenerateECCKeyPair() domain.KeyPair {
+	var eccGen ECCGenerator = ECCGenerator{}
+	eccKeyPair, err := eccGen.Generate()
+	if err == nil {
+		var eccMarsh ECCMarshaler = ECCMarshaler{}
+		publicKey, privateKey, err1 := eccMarsh.Encode(*eccKeyPair)
+		if err1 == nil {
+			return domain.KeyPair{
+				PublicKey:  publicKey,
+				PrivateKey: privateKey,
+			}
+		}
+	}
+	return domain.KeyPair{}
 }

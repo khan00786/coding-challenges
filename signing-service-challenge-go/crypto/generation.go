@@ -5,6 +5,13 @@ import (
 	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/rsa"
+
+	"github.com/fiskaly/coding-challenges/signing-service-challenge/domain"
+)
+
+const (
+	ecc_key = "ECC"
+	rsa_key = "RSA"
 )
 
 // RSAGenerator generates a RSA key pair.
@@ -13,7 +20,7 @@ type RSAGenerator struct{}
 // Generate generates a new RSAKeyPair.
 func (g *RSAGenerator) Generate() (*RSAKeyPair, error) {
 	// Security has been ignored for the sake of simplicity.
-	key, err := rsa.GenerateKey(rand.Reader, 512)
+	key, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
 		return nil, err
 	}
@@ -39,4 +46,16 @@ func (g *ECCGenerator) Generate() (*ECCKeyPair, error) {
 		Public:  &key.PublicKey,
 		Private: key,
 	}, nil
+}
+
+func GenerateKeyPair(algorithm string) domain.KeyPair {
+
+	switch algorithm {
+	case rsa_key:
+		return GenerateRSAKeyPair()
+	case ecc_key:
+		return GenerateECCKeyPair()
+	}
+
+	return domain.KeyPair{}
 }

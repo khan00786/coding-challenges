@@ -3,6 +3,8 @@ package api
 import (
 	"encoding/json"
 	"net/http"
+
+	"github.com/fiskaly/coding-challenges/signing-service-challenge/persistence"
 )
 
 // Response is the generic API response container.
@@ -22,6 +24,8 @@ type Server struct {
 
 // NewServer is a factory to instantiate a new Server.
 func NewServer(listenAddress string) *Server {
+
+	persistence.Initialize()
 	return &Server{
 		listenAddress: listenAddress,
 		// TODO: add services / further dependencies here ...
@@ -33,6 +37,8 @@ func (s *Server) Run() error {
 	mux := http.NewServeMux()
 
 	mux.Handle("/api/v0/health", http.HandlerFunc(s.Health))
+	mux.Handle("/api/v0/devices/", http.HandlerFunc(s.Device))
+	mux.Handle("/api/v0/signatures/", http.HandlerFunc(s.Signature))
 
 	// TODO: register further HandlerFuncs here ...
 

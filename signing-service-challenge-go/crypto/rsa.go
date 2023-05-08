@@ -4,6 +4,8 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
+
+	"github.com/fiskaly/coding-challenges/signing-service-challenge/domain"
 )
 
 // RSAKeyPair is a DTO that holds RSA private and public keys.
@@ -51,4 +53,20 @@ func (m *RSAMarshaler) Unmarshal(privateKeyBytes []byte) (*RSAKeyPair, error) {
 		Private: privateKey,
 		Public:  &privateKey.PublicKey,
 	}, nil
+}
+
+func GenerateRSAKeyPair() domain.KeyPair {
+	var rsaGen RSAGenerator = RSAGenerator{}
+	rsaKeyPair, err := rsaGen.Generate()
+	if err == nil {
+		var rsaMarsh RSAMarshaler = RSAMarshaler{}
+		publicKey, privateKey, err1 := rsaMarsh.Marshal(*rsaKeyPair)
+		if err1 == nil {
+			return domain.KeyPair{
+				PublicKey:  publicKey,
+				PrivateKey: privateKey,
+			}
+		}
+	}
+	return domain.KeyPair{}
 }

@@ -17,4 +17,5 @@ func main() {
 	if err := server.Run(); err != nil {
 		log.Fatal("Could not start server on ", ListenAddress)
 	}
+
 }
