@@ -7,7 +7,6 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha512"
-	"fmt"
 
 	"github.com/fiskaly/coding-challenges/signing-service-challenge/domain"
 )
@@ -28,10 +27,6 @@ func (marshaller RSAMarshaler) Sign(dataToBeSigned []byte, encodedPublicKey doma
 	hash := sha512.New()
 	hash.Write(messageBytes.Bytes())
 	digest := hash.Sum(nil)
-	fmt.Println("Key")
-	fmt.Println(keyPair.Private)
-	fmt.Println("Key")
-	fmt.Println(digest)
 
 	encryptedBytes, err := rsa.SignPSS(
 		rand.Reader,

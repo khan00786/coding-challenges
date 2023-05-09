@@ -3,6 +3,7 @@ package service
 import (
 	"encoding/base64"
 	"fmt"
+	"log"
 
 	"github.com/fiskaly/coding-challenges/signing-service-challenge/crypto"
 	"github.com/fiskaly/coding-challenges/signing-service-challenge/domain"
@@ -25,7 +26,7 @@ func SaveDevice(deviceRequest domain.DeviceRequest) (domain.CreateDeviceResponse
 
 	response := mapper.ConvertDeviceOutputToResponse(deviceOutput)
 
-	fmt.Println(deviceOutput)
+	log.Println(deviceOutput)
 	return response, nil
 }
 
@@ -34,7 +35,7 @@ func GetAllDevices() []domain.CreateDeviceResponse {
 	responseList := make([]domain.CreateDeviceResponse, len(devicesOutput))
 	counter := 0
 	for _, val := range devicesOutput {
-		responseList[counter] = mapper.ConvertDeviceOutputToResponse(val)
+		responseList[counter] = mapper.ConvertDeviceOutputToResponse(*val)
 		counter++
 	}
 	return responseList
@@ -45,7 +46,7 @@ func GetDeviceDetails(id string) (domain.CreateDeviceResponse, error) {
 	if err != nil {
 		return domain.CreateDeviceResponse{}, err
 	}
-	response := mapper.ConvertDeviceOutputToResponse(deviceOutput)
+	response := mapper.ConvertDeviceOutputToResponse(*deviceOutput)
 
 	return response, nil
 }
@@ -53,35 +54,30 @@ func GetDeviceDetails(id string) (domain.CreateDeviceResponse, error) {
 func SaveSignature(securedToken domain.SignatureRequest) (domain.SignatureResponse, error) {
 	requestVO, err := mapper.ConvertStringTokenToSignatureRequestVO(securedToken)
 	if err != nil {
-		fmt.Println("Test1")
-		fmt.Println(err)
+		log.Println(err)
 		return domain.SignatureResponse{}, err
 	}
 
 	device, err := persistence.GetDeviceDetails(requestVO.DeviceId)
 	if err != nil {
-		fmt.Println("Test2")
-		fmt.Println(err)
+		log.Println(err)
 		return domain.SignatureResponse{}, err
 	}
 
-	ok := validateToken(device, requestVO)
+	ok := validateToken(*device, requestVO)
 	if !ok {
-		fmt.Println("Test3")
-		fmt.Println(err)
+		log.Println(err)
 		err = fmt.Errorf("invalid secured token")
 		return domain.SignatureResponse{}, err
 	}
 	newSignature, err := generateSignature(device.Algorithm, []byte(requestVO.Data), device.KeyPair)
 	if err != nil {
-		fmt.Println("Test4")
-		fmt.Println(err)
+		log.Println(err)
 		return domain.SignatureResponse{}, err
 	}
 	_, err = persistence.SaveSignature(requestVO.DeviceId, newSignature)
 	if err != nil {
-		fmt.Println("Test5")
-		fmt.Println(err)
+		log.Println(err)
 		return domain.SignatureResponse{}, err
 	}
 	response := domain.SignatureResponse{
@@ -111,12 +107,14 @@ func generateSignature(algorithm string, dataToBeSigned []byte, encodedPublicKey
 func validateToken(device domain.Device, requestVO domain.SignatureRequestVO) bool {
 
 	var response bool
-	if requestVO.Counter == 0 {
-		fmt.Println(requestVO.Counter == device.Counter)
-		fmt.Println(requestVO.LastSignature == base64.StdEncoding.EncodeToString([]byte(device.Id)))
+	log.Printf("Device Counter: %v\n", requestVO.Counter == device.Counter)
+	if device.Counter == 0 {
+		log.Printf("Last Signature for 0: %v\n", requestVO.LastSignature == base64.StdEncoding.EncodeToString([]byte(device.Id)))
+
 		response = requestVO.Counter == device.Counter &&
 			requestVO.LastSignature == base64.StdEncoding.EncodeToString([]byte(device.Id))
 	} else {
+		log.Printf("Last Signature for >0: %v\n", device.Signatures[len(device.Signatures)-1] == base64.StdEncoding.EncodeToString([]byte(device.Id)))
 		response = requestVO.Counter == device.Counter &&
 			requestVO.LastSignature == device.Signatures[len(device.Signatures)-1]
 
