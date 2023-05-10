@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"regexp"
 
@@ -29,6 +30,7 @@ func (s *Server) Signature(response http.ResponseWriter, request *http.Request) 
 }
 
 func SignTransaction(response http.ResponseWriter, request *http.Request) {
+	log.Printf("sign transaction invoked")
 	decoder := json.NewDecoder(request.Body)
 	var signRequest domain.SignatureRequest
 	err := decoder.Decode(&signRequest)

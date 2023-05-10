@@ -5,8 +5,10 @@ import (
 	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/rsa"
+	"fmt"
 
 	"github.com/fiskaly/coding-challenges/signing-service-challenge/domain"
+	"github.com/google/uuid"
 )
 
 const (
@@ -58,4 +60,9 @@ func GenerateKeyPair(algorithm string) domain.KeyPair {
 	}
 
 	return domain.KeyPair{}
+}
+
+func GenerateUUID() string {
+	id := uuid.New()
+	return fmt.Sprintf("%x", id)
 }

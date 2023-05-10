@@ -1,11 +1,6 @@
 package domain
 
-type KeyPair struct {
-	PublicKey  []byte
-	PrivateKey []byte
-}
-
-// DEVICE Value Objects
+// DEVICE Structs
 type Device struct {
 	Id         string   `json:"id"`
 	Algorithm  string   `json:"algorithm"`
@@ -15,8 +10,12 @@ type Device struct {
 	KeyPair    KeyPair  `json:"keyPair"`
 }
 
+type KeyPair struct {
+	PublicKey  []byte
+	PrivateKey []byte
+}
+
 type DeviceRequest struct {
-	Id        string `json:"id"`
 	Algorithm string `json:"algorithm"`
 	Label     string `json:"label"`
 }
@@ -28,7 +27,7 @@ type CreateDeviceResponse struct {
 	Signatures []string `json:"signatures"`
 }
 
-// SIGNATURE Value Objects
+// SIGNATURE Structs
 type SignatureRequest struct {
 	DeviceId    string `json:"deviceId"`
 	SecuredData string `json:"SecuredData"`
@@ -44,4 +43,10 @@ type SignatureRequestVO struct {
 type SignatureResponse struct {
 	Signature  string `json:"signature"`
 	SignedData string `json:"signedData"`
+}
+
+//HEALTH Structs
+type HealthResponse struct {
+	Status  string `json:"status"`
+	Version string `json:"version"`
 }

@@ -1,22 +1,19 @@
 package api
 
-import "net/http"
+import (
+	"net/http"
 
-type HealthResponse struct {
-	Status  string `json:"status"`
-	Version string `json:"version"`
-}
+	"github.com/fiskaly/coding-challenges/signing-service-challenge/domain"
+)
 
 // Health evaluates the health of the service and writes a standardized response.
 func (s *Server) Health(response http.ResponseWriter, request *http.Request) {
 	if request.Method != http.MethodGet {
-		WriteErrorResponse(response, http.StatusMethodNotAllowed, []string{
-			http.StatusText(http.StatusMethodNotAllowed),
-		})
+		MethodNotAllowedError(response, "Invalid Status Method")
 		return
 	}
 
-	health := HealthResponse{
+	health := domain.HealthResponse{
 		Status:  "pass",
 		Version: "v0",
 	}

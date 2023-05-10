@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"regexp"
 
@@ -26,7 +27,7 @@ func (s *Server) Device(response http.ResponseWriter, request *http.Request) {
 		ListDeviceById(response, request)
 		return
 	case request.Method == http.MethodPost && createDevicesReg.Match([]byte(request.URL.Path)):
-		CreateSignatureDevice(response, request)
+		CreateDevice(response, request)
 		return
 	default:
 		MethodNotAllowedError(response, "Invalid Status Method")
@@ -37,11 +38,13 @@ func (s *Server) Device(response http.ResponseWriter, request *http.Request) {
 }
 
 func ListDevices(response http.ResponseWriter, request *http.Request) {
+	log.Printf("list devices invoked")
 	devicesOutput := service.GetAllDevices()
 	WriteAPIResponse(response, http.StatusOK, devicesOutput)
 }
 
 func ListDeviceById(response http.ResponseWriter, request *http.Request) {
+	log.Printf("list devices by id invoked")
 	matches := GetDeviceReg.FindStringSubmatch(request.URL.Path)
 	if len(matches) < 2 {
 		InternalServerError(response, "Invalid Device ID")
@@ -55,7 +58,8 @@ func ListDeviceById(response http.ResponseWriter, request *http.Request) {
 	WriteAPIResponse(response, http.StatusOK, deviceOutput)
 }
 
-func CreateSignatureDevice(response http.ResponseWriter, request *http.Request) {
+func CreateDevice(response http.ResponseWriter, request *http.Request) {
+	log.Printf("create device invoked")
 	decoder := json.NewDecoder(request.Body)
 	var device domain.DeviceRequest
 	err := decoder.Decode(&device)

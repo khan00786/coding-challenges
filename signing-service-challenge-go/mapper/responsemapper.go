@@ -14,7 +14,6 @@ const (
 
 func ConvertDeviceRequestToDevice(deviceRequest domain.DeviceRequest) domain.Device {
 	device := domain.Device{
-		Id:         deviceRequest.Id,
 		Algorithm:  deviceRequest.Algorithm,
 		Counter:    0,
 		Signatures: nil,

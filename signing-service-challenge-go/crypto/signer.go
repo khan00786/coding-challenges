@@ -1,7 +1,6 @@
 package crypto
 
 import (
-	"bytes"
 	"crypto"
 	"crypto/ecdsa"
 	"crypto/rand"
@@ -23,9 +22,8 @@ func (marshaller RSAMarshaler) Sign(dataToBeSigned []byte, encodedPublicKey doma
 		return []byte{}, err
 	}
 
-	messageBytes := bytes.NewBufferString(string(dataToBeSigned[:]))
 	hash := sha512.New()
-	hash.Write(messageBytes.Bytes())
+	hash.Write(dataToBeSigned)
 	digest := hash.Sum(nil)
 
 	encryptedBytes, err := rsa.SignPSS(
@@ -60,5 +58,3 @@ func (marshaller ECCMarshaler) Sign(dataToBeSigned []byte, encodedPublicKey doma
 	}
 	return encryptedBytes, nil
 }
-
-// TODO: implement RSA and ECDSA signing ...

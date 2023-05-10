@@ -40,8 +40,6 @@ func (s *Server) Run() error {
 	mux.Handle("/api/v0/devices/", http.HandlerFunc(s.Device))
 	mux.Handle("/api/v0/signatures/", http.HandlerFunc(s.Signature))
 
-	// TODO: register further HandlerFuncs here ...
-
 	return http.ListenAndServe(s.listenAddress, mux)
 }
 
