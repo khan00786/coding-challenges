@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"log"
+	"sync"
 
 	"github.com/fiskaly/coding-challenges/signing-service-challenge/crypto"
 	"github.com/fiskaly/coding-challenges/signing-service-challenge/domain"
@@ -16,15 +17,19 @@ const (
 	rsa_key = "RSA"
 )
 
-func SaveDevice(deviceRequest domain.DeviceRequest) (domain.CreateDeviceResponse, error) {
+func SaveDevice(deviceRequest domain.DeviceRequest, deviceMutex *sync.Mutex) (domain.CreateDeviceResponse, error) {
+	var response domain.CreateDeviceResponse
 	device := mapper.ConvertDeviceRequestToDevice(deviceRequest)
 
 	device.KeyPair = crypto.GenerateKeyPair(device.Algorithm)
 	device.Id = crypto.GenerateUUID()
 
-	deviceOutput := persistence.SaveDevice(device)
-
-	response := mapper.ConvertDeviceOutputToResponse(deviceOutput)
+	deviceOutput, err := persistence.SaveDevice(device, deviceMutex)
+	if err != nil {
+		log.Println(err)
+		return response, err
+	}
+	response = mapper.ConvertDeviceOutputToResponse(deviceOutput)
 
 	log.Printf("device saved successfully:[id] %v\n", device.Id)
 	return response, nil
@@ -54,7 +59,7 @@ func GetDeviceDetails(id string) (domain.CreateDeviceResponse, error) {
 	return response, nil
 }
 
-func SaveSignature(securedToken domain.SignatureRequest) (domain.SignatureResponse, error) {
+func SaveSignature(securedToken domain.SignatureRequest, signatureMutex *sync.Mutex) (domain.SignatureResponse, error) {
 	var response domain.SignatureResponse
 	requestVO, err := mapper.ConvertStringTokenToSignatureRequestVO(securedToken)
 	if err != nil {
@@ -67,8 +72,26 @@ func SaveSignature(securedToken domain.SignatureRequest) (domain.SignatureRespon
 		log.Println(err)
 		return response, err
 	}
+	signatureMutex.Lock()
+	newSignature, err := validateAndSign(device, &requestVO)
+	signatureMutex.Unlock()
+	if err != nil {
+		log.Println(err)
+		return response, err
+	}
 
-	ok := validateToken(*device, requestVO)
+	response = domain.SignatureResponse{
+		Signature:  newSignature,
+		SignedData: securedToken.SecuredData,
+	}
+	log.Printf("signature saved successfully:[id] %v\n", requestVO.DeviceId)
+	return response, nil
+}
+
+func validateAndSign(device *domain.Device, requestVO *domain.SignatureRequestVO) (string, error) {
+	var response string
+	var err error
+	ok := validateToken(*device, *requestVO)
 	if !ok {
 		err = fmt.Errorf("invalid secured token")
 		log.Println(err)
@@ -79,17 +102,12 @@ func SaveSignature(securedToken domain.SignatureRequest) (domain.SignatureRespon
 		log.Println(err)
 		return response, err
 	}
-	_, err = persistence.SaveSignature(requestVO.DeviceId, newSignature)
+	_, err = persistence.SaveSignature(device, newSignature)
 	if err != nil {
 		log.Println(err)
-		return domain.SignatureResponse{}, err
+		return response, err
 	}
-	response = domain.SignatureResponse{
-		Signature:  newSignature,
-		SignedData: securedToken.SecuredData,
-	}
-	log.Printf("signature saved successfully:[id] %v\n", requestVO.DeviceId)
-	return response, nil
+	return newSignature, nil
 }
 
 func generateSignature(algorithm string, dataToBeSigned []byte, encodedPublicKey domain.KeyPair) (string, error) {

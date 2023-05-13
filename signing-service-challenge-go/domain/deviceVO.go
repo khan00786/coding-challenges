@@ -16,8 +16,8 @@ type KeyPair struct {
 }
 
 type DeviceRequest struct {
-	Algorithm string `json:"algorithm"`
-	Label     string `json:"label"`
+	Algorithm string `json:"algorithm" validate:"required"`
+	Label     string `json:"label" validate:"required"`
 }
 
 type CreateDeviceResponse struct {
@@ -29,8 +29,8 @@ type CreateDeviceResponse struct {
 
 // SIGNATURE Structs
 type SignatureRequest struct {
-	DeviceId    string `json:"deviceId"`
-	SecuredData string `json:"SecuredData"`
+	DeviceId    string `json:"deviceId" validate:"required"`
+	SecuredData string `json:"SecuredData" validate:"required"`
 }
 
 type SignatureRequestVO struct {

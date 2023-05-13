@@ -2,6 +2,7 @@ package persistence
 
 import (
 	"fmt"
+	"sync"
 
 	"github.com/fiskaly/coding-challenges/signing-service-challenge/domain"
 )
@@ -13,9 +14,19 @@ func Initialize() {
 }
 
 // *********DEVICE OPERATIONS******************
-func SaveDevice(deviceDetails domain.Device) domain.Device {
-	signatureData[deviceDetails.Id] = &deviceDetails
-	return *signatureData[deviceDetails.Id]
+func SaveDevice(deviceDetails domain.Device, deviceMutex *sync.Mutex) (domain.Device, error) {
+	var response domain.Device
+	deviceMutex.Lock()
+	_, ok := signatureData[deviceDetails.Id]
+	if !ok {
+		signatureData[deviceDetails.Id] = &deviceDetails
+		response = *signatureData[deviceDetails.Id]
+		deviceMutex.Unlock()
+	} else {
+		deviceMutex.Unlock()
+		return response, fmt.Errorf("Device already exist: " + deviceDetails.Id)
+	}
+	return response, nil
 }
 
 func GetDeviceDetails(deviceId string) (*domain.Device, error) {
@@ -27,30 +38,14 @@ func GetDeviceDetails(deviceId string) (*domain.Device, error) {
 	}
 }
 
+func GetAllDevices() map[string]*domain.Device {
+	return signatureData
+}
+
 // *********SIGNATURE OPERATIONS******************
-func SaveSignature(deviceId string, signature string) (domain.Device, error) {
-	device, err := GetDeviceDetails(deviceId)
-	if err != nil {
-		return domain.Device{}, err
-	}
+func SaveSignature(device *domain.Device, signature string) (domain.Device, error) {
 
 	device.Signatures = append(device.Signatures, signature)
 	device.Counter++
 	return *device, nil
-}
-
-func GetLastSignature(deviceId string) (string, error) {
-	var response string
-	device, err := GetDeviceDetails(deviceId)
-	if err != nil {
-		return response, err
-	} else {
-		lastIndex := device.Counter - 1
-		response = device.Signatures[lastIndex]
-		return response, nil
-	}
-}
-
-func GetAllDevices() map[string]*domain.Device {
-	return signatureData
 }
